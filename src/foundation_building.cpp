@@ -12,17 +12,19 @@ bool FoundationBuilding::NeedsQueen() {
   return queenTags.size() + numPendingQueens < 1;
 }
 
-void FoundationBuilding::TryTrainWorker(ActionInterface* actions, const ObservationInterface* observation) {
+void FoundationBuilding::TryTrainWorker(ActionInterface* actions, const ObservationInterface* observation, QueryInterface* query) {
   const int32_t requiredMinerals = 50;
   const int32_t requiredVespene = 0;
   const int32_t requiredFood = 1;
-  if (NeedsMineralHarvesters(observation) && ActionPermissible(observation, requiredMinerals, requiredVespene, requiredFood)) {
+  if (NeedsMineralHarvesters(observation)) {
     const Unit* unit = observation->GetUnit(buildingTag);
     Units larvas = observation->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::ZERG_LARVA));
     uint64_t larvaTag;
     if (FindNearestUnit(unit->pos, larvas, &larvaTag)) {
-      actions->UnitCommand(larvaTag, ABILITY_ID::TRAIN_DRONE);
-      numPendingWorkers++;
+      if (IsUnitAbilityAvailable(query, larvaTag, ABILITY_ID::TRAIN_DRONE)) {
+        actions->UnitCommand(larvaTag, ABILITY_ID::TRAIN_DRONE);
+        numPendingWorkers++;
+      }
     }
   }
 }
@@ -59,11 +61,12 @@ bool FoundationBuilding::OnQueenDestroyed(Tag queenTag) {
   return false;
 }
 
-void FoundationBuilding::TryTrainQueen(ActionInterface* actions, const ObservationInterface* observation) {
+void FoundationBuilding::TryTrainQueen(ActionInterface* actions, const ObservationInterface* observation, QueryInterface* query) {
   const int32_t requiredMinerals = 150;
   const int32_t requiredVespene = 0;
   const int32_t requiredFood = 2;
-  if (NeedsQueen() && ActionPermissible(observation, requiredMinerals, requiredVespene, requiredFood)) {
+  if (NeedsQueen() && IsUnitAbilityAvailable(query, buildingTag, ABILITY_ID::TRAIN_QUEEN)) {
+    cout << "training queen" << endl;
     actions->UnitCommand(buildingTag, ABILITY_ID::TRAIN_QUEEN);
     numPendingQueens++;
   }

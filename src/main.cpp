@@ -3,7 +3,6 @@
 using namespace sc2;
 using namespace std;
 
-
 int main(int argc, char* argv[]) {
   Coordinator coordinator;
   coordinator.LoadSettings(argc, argv);
@@ -16,7 +15,7 @@ int main(int argc, char* argv[]) {
   });
 
   coordinator.LaunchStarcraft();
-  coordinator.StartGame(sc2::kMapBelShirVestigeLE);
+  coordinator.StartGame(kMapBelShirVestigeLE);
 
   while (coordinator.Update()) {
   }

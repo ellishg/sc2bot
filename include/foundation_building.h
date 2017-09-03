@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iostream>
+
 #include "common.h"
 
 class FoundationBuilding {
@@ -21,11 +23,11 @@ public:
 
   bool OnQueenDestroyed(sc2::Tag queenTag);
 
-  void TryTrainWorker(sc2::ActionInterface* action, const sc2::ObservationInterface* observation);
+  void TryTrainWorker(sc2::ActionInterface* action, const sc2::ObservationInterface* observation, sc2::QueryInterface* query);
 
   bool TryAssignWorker(sc2::ActionInterface* actions, const sc2::ObservationInterface* observation, const sc2::Units& mineralFields, const sc2::Unit& worker);
 
-  void TryTrainQueen(sc2::ActionInterface* action, const sc2::ObservationInterface* observation);
+  void TryTrainQueen(sc2::ActionInterface* action, const sc2::ObservationInterface* observation, sc2::QueryInterface* query);
 
   void TryExpand();
 };

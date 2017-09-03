@@ -111,42 +111,61 @@ bool Bot::NeedSupply() {
 
 void Bot::TryGetSupply() {
   const ObservationInterface* observation = Observation();
-  const int32_t requiredMinerals = 100;
-  const int32_t requiredVespene = 0;
-  const int32_t requiredFood = 0;
   Units larvas = observation->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::ZERG_LARVA));
-  if (larvas.size() > 0 && ActionPermissible(observation, requiredMinerals, requiredVespene, requiredFood)) {
-    Actions()->UnitCommand(larvas[0].tag, ABILITY_ID::TRAIN_OVERLORD);
-    _pendingSupply += 10;
+  if (larvas.size() > 0) {
+    if (IsUnitAbilityAvailable(Query(), larvas[0].tag, ABILITY_ID::TRAIN_OVERLORD)) {
+      Actions()->UnitCommand(larvas[0].tag, ABILITY_ID::TRAIN_OVERLORD);
+      _pendingSupply += 10;
+    }
+  }
+}
+
+void Bot::TryBuildStructure(ABILITY_ID buildStructureAbility) {
+  const ObservationInterface* observation = Observation();
+  if (_workerTags.size() > 0) {
+    const Unit* drone = observation->GetUnit(_workerTags.back());
+    QueryInterface* query = Query();
+    Point2D targetPoint;
+    float radius = 10;
+    if (FindRandomPoint(drone->pos, &targetPoint, radius, [query, buildStructureAbility](const Point2D& p){return query->Placement(buildStructureAbility, p);})) {
+      if (IsUnitAbilityAvailable(Query(), drone->tag, buildStructureAbility)) {
+        Actions()->UnitCommand(drone->tag, buildStructureAbility, targetPoint);
+        _workerTags.pop_back();
+      }
+    }
   }
 }
 
 void Bot::TryExpand() {
   const ObservationInterface* observation = Observation();
-  const int32_t requiredMinerals = 300;
-  const int32_t requiredVespene = 0;
-  const int32_t requiredFood = 0;
-  if (_workerTags.size() > 0 && ActionPermissible(observation, requiredMinerals, requiredVespene, requiredFood)) {
+  if (_workerTags.size() > 0) {
     const Unit* drone = observation->GetUnit(_workerTags.back());
     Point2D expansionPoint;
-    QueryInterface * query = Query();
+    QueryInterface* query = Query();
     if (FindNearestPoint2D(drone->pos, _expansions, &expansionPoint, [query](const Point2D& p){return query->Placement(ABILITY_ID::BUILD_HATCHERY, p);})) {
-      Actions()->UnitCommand(drone->tag, ABILITY_ID::BUILD_HATCHERY, expansionPoint);
-      _workerTags.pop_back();
+      if (IsUnitAbilityAvailable(query, drone->tag, ABILITY_ID::BUILD_HATCHERY)) {
+        Actions()->UnitCommand(drone->tag, ABILITY_ID::BUILD_HATCHERY, expansionPoint);
+        _workerTags.pop_back();
+      }
     }
   }
 }
 
 void Bot::WorkEconomy() {
-  const ObservationInterface * observation = Observation();
+  ActionInterface* actions = Actions();
+  const ObservationInterface* observation = Observation();
+  QueryInterface* query = Query();
   if (NeedSupply()) {
     TryGetSupply();
   }
   for (auto& f : _foundationBuildings) {
-    f.TryTrainWorker(Actions(), observation);
+    f.TryTrainQueen(actions, observation, query);
   }
   for (auto& f : _foundationBuildings) {
-    f.TryTrainQueen(Actions(), observation);
+    f.TryTrainWorker(actions, observation, query);
+  }
+  if (observation->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::ZERG_SPAWNINGPOOL)).empty()) {
+    TryBuildStructure(ABILITY_ID::BUILD_SPAWNINGPOOL);
   }
   TryExpand();
 }

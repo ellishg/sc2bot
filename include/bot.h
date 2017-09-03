@@ -23,6 +23,8 @@ private:
 
   void TryGetSupply();
 
+  void TryBuildStructure(sc2::ABILITY_ID buildStructureAbility);
+
 public:
 
   Bot() : _foundationBuildings(), _expansions(), _workerTags(), _pendingSupply(0) {}

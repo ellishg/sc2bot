@@ -43,8 +43,26 @@ bool FindNearestPoint2D(const Point2D& point, const vector<Point2D>& candidates,
   return true;
 }
 
-bool ActionPermissible(const ObservationInterface* observation, const int32_t mineralCost, const int32_t vespeneCost, const int32_t foodCost) {
-  return mineralCost <= observation->GetMinerals()
-          && vespeneCost <= observation->GetVespene()
-          && foodCost <= observation->GetFoodCap() - observation->GetFoodUsed();
+bool IsUnitAbilityAvailable(QueryInterface* query, Tag unitTag, ABILITY_ID abilityID) {
+  AvailableAbilities abilities = query->GetAbilitiesForUnit(unitTag);
+  for (const auto& a : abilities.abilities) {
+    if (a.ability_id == abilityID) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool FindRandomPoint(const Point2D& origin, Point2D* target, float radius, function<bool(const Point2D&)> filter) {
+  const int numTests = 100;
+  for (size_t i = 0; i < numTests; i++) {
+    Point2D testPoint = Point2D(GetRandomScalar(), GetRandomScalar());
+    Normalize2D(testPoint);
+    testPoint = origin + (testPoint * radius);
+    if (filter(testPoint)) {
+      *target = testPoint;
+      return true;
+    }
+  }
+  return false;
 }
