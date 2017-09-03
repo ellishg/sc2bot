@@ -42,3 +42,9 @@ bool FindNearestPoint2D(const Point2D& point, const vector<Point2D>& candidates,
   }
   return true;
 }
+
+bool ActionPermissible(const ObservationInterface* observation, const int32_t mineralCost, const int32_t vespeneCost, const int32_t foodCost) {
+  return mineralCost <= observation->GetMinerals()
+          && vespeneCost <= observation->GetVespene()
+          && foodCost <= observation->GetFoodCap() - observation->GetFoodUsed();
+}
