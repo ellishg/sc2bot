@@ -39,14 +39,11 @@ void Bot::OnUnitCreated(const Unit& unit) {
       break;
     }
     case UNIT_TYPEID::ZERG_QUEEN: {
-      // uint64_t target;
-      // if (FindNearestUnit(unit.pos, foundationBuildings.units, &target)) {
-      //   for (auto& b : foundationBuildings) {
-      //     if (b.unit.tag == target && b.OnQueenCreated(Actions(), unit)) {
-      //       break;
-      //     }
-      //   }
-      // }
+      for (auto& foundationBuilding : _foundationBuildings) {
+        if (foundationBuilding.OnQueenCreated(unit.tag)) {
+          break;
+        }
+      }
       break;
     }
     case UNIT_TYPEID::ZERG_OVERLORD: {
@@ -111,10 +108,10 @@ bool Bot::NeedSupply() {
 
 void Bot::TryGetSupply() {
   const ObservationInterface* observation = Observation();
-  Units larvas = observation->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::ZERG_LARVA));
-  if (larvas.size() > 0) {
-    if (IsUnitAbilityAvailable(Query(), larvas[0].tag, ABILITY_ID::TRAIN_OVERLORD)) {
-      Actions()->UnitCommand(larvas[0].tag, ABILITY_ID::TRAIN_OVERLORD);
+  Units larvae = observation->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::ZERG_LARVA));
+  if (larvae.size() > 0) {
+    if (IsUnitAbilityAvailable(Query(), larvae[0].tag, ABILITY_ID::TRAIN_OVERLORD)) {
+      Actions()->UnitCommand(larvae[0].tag, ABILITY_ID::TRAIN_OVERLORD);
       _pendingSupply += 10;
     }
   }
@@ -159,7 +156,9 @@ void Bot::WorkEconomy() {
     TryGetSupply();
   }
   for (auto& f : _foundationBuildings) {
-    f.TryTrainQueen(actions, observation, query);
+    f.TryTrainQueen(actions, query);
+    f.TryBuildCreepTumor(actions, observation, query);
+    // f.TryInjectLarva(actions, query);
   }
   for (auto& f : _foundationBuildings) {
     f.TryTrainWorker(actions, observation, query);

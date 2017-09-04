@@ -18,9 +18,9 @@ void FoundationBuilding::TryTrainWorker(ActionInterface* actions, const Observat
   const int32_t requiredFood = 1;
   if (NeedsMineralHarvesters(observation)) {
     const Unit* unit = observation->GetUnit(buildingTag);
-    Units larvas = observation->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::ZERG_LARVA));
+    Units larvae = observation->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::ZERG_LARVA));
     uint64_t larvaTag;
-    if (FindNearestUnit(unit->pos, larvas, &larvaTag)) {
+    if (FindNearestUnit(unit->pos, larvae, &larvaTag)) {
       if (IsUnitAbilityAvailable(query, larvaTag, ABILITY_ID::TRAIN_DRONE)) {
         actions->UnitCommand(larvaTag, ABILITY_ID::TRAIN_DRONE);
         numPendingWorkers++;
@@ -42,7 +42,7 @@ bool FoundationBuilding::TryAssignWorker(ActionInterface* actions, const Observa
   return false;
 }
 
-bool FoundationBuilding::OnQueenCreated(ActionInterface* actions, Tag queenTag) {
+bool FoundationBuilding::OnQueenCreated(Tag queenTag) {
   if (numPendingQueens > 0) {
     queenTags.push_back(queenTag);
     numPendingQueens--;
@@ -61,17 +61,30 @@ bool FoundationBuilding::OnQueenDestroyed(Tag queenTag) {
   return false;
 }
 
-void FoundationBuilding::TryTrainQueen(ActionInterface* actions, const ObservationInterface* observation, QueryInterface* query) {
-  const int32_t requiredMinerals = 150;
-  const int32_t requiredVespene = 0;
-  const int32_t requiredFood = 2;
+void FoundationBuilding::TryTrainQueen(ActionInterface* actions, QueryInterface* query) {
   if (NeedsQueen() && IsUnitAbilityAvailable(query, buildingTag, ABILITY_ID::TRAIN_QUEEN)) {
-    cout << "training queen" << endl;
     actions->UnitCommand(buildingTag, ABILITY_ID::TRAIN_QUEEN);
     numPendingQueens++;
   }
 }
 
-void FoundationBuilding::TryExpand() {
+void FoundationBuilding::TryInjectLarva(ActionInterface* actions, QueryInterface* query) {
+  for (auto& queenTag : queenTags) {
+    if (IsUnitAbilityAvailable(query, queenTag, ABILITY_ID::EFFECT_INJECTLARVA)) {
+      actions->UnitCommand(queenTag, ABILITY_ID::EFFECT_INJECTLARVA, buildingTag);
+      return;
+    }
+  }
+}
 
+void FoundationBuilding::TryBuildCreepTumor(ActionInterface* actions, const ObservationInterface* observation, QueryInterface* query) {
+  for (auto& queenTag : queenTags) {
+    if (IsUnitAbilityAvailable(query, queenTag, ABILITY_ID::BUILD_CREEPTUMOR)) {
+      const Unit* queen = observation->GetUnit(queenTag);
+      Point2D target;
+      if (FindRandomPoint(queen->pos, &target, 10, [query](const Point2D& p){return query->Placement(ABILITY_ID::BUILD_CREEPTUMOR, p);})) {
+        actions->UnitCommand(queenTag, ABILITY_ID::BUILD_CREEPTUMOR);
+      }
+    }
+  }
 }
