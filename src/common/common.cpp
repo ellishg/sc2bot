@@ -45,7 +45,7 @@ bool FindNearestPoint2D(const Point2D& point, const vector<Point2D>& candidates,
 
 bool IsUnitAbilityAvailable(QueryInterface* query, Tag unitTag, ABILITY_ID abilityID) {
   AvailableAbilities abilities = query->GetAbilitiesForUnit(unitTag);
-  for (const auto& a : abilities.abilities) {
+  for (auto& a : abilities.abilities) {
     if (a.ability_id == abilityID) {
       return true;
     }
@@ -53,12 +53,26 @@ bool IsUnitAbilityAvailable(QueryInterface* query, Tag unitTag, ABILITY_ID abili
   return false;
 }
 
+vector<Tag> UnitsWithAbility(QueryInterface* query, vector<Tag> unitTags, ABILITY_ID abilityID) {
+  vector<Tag> capableUnits;
+  auto abilityLists = query->GetAbilitiesForUnits(unitTags);
+  for (auto& availableAbilities : abilityLists) {
+    for (auto& ability : availableAbilities.abilities) {
+      if (ability.ability_id == abilityID) {
+        capableUnits.push_back(availableAbilities.unit_tag);
+        break;
+      }
+    }
+  }
+  return capableUnits;
+}
+
 bool FindRandomPoint(const Point2D& origin, Point2D* target, float radius, function<bool(const Point2D&)> filter) {
   const int numTests = 100;
   for (size_t i = 0; i < numTests; i++) {
     Point2D testPoint = Point2D(GetRandomScalar(), GetRandomScalar());
     Normalize2D(testPoint);
-    testPoint = origin + (testPoint * radius);
+    testPoint = origin + (testPoint * radius * GetRandomScalar());
     if (filter(testPoint)) {
       *target = testPoint;
       return true;

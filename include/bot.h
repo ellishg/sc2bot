@@ -17,6 +17,8 @@ private:
 
   void TryExpand();
 
+  void TryExpandCreep();
+
   void WorkEconomy();
 
   bool NeedSupply();

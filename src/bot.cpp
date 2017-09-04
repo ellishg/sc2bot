@@ -21,6 +21,7 @@ void Bot::OnStep() {
 void Bot::OnUnitCreated(const Unit& unit) {
   const ObservationInterface * observation = Observation();
   ActionInterface * actions = Actions();
+  // cout << "Created " << unit.unit_type.to_string() << endl;
   switch (unit.unit_type.ToType()) {
     case UNIT_TYPEID::ZERG_HIVE:
     case UNIT_TYPEID::ZERG_LAIR:
@@ -50,6 +51,7 @@ void Bot::OnUnitCreated(const Unit& unit) {
       if (_pendingSupply >= 10) {
         _pendingSupply -= 10;
       }
+      break;
     }
     default: {
       break;
@@ -148,6 +150,27 @@ void Bot::TryExpand() {
   }
 }
 
+void Bot::TryExpandCreep() {
+  QueryInterface* query = Query();
+  const ObservationInterface* observation = Observation();
+  ActionInterface* actions = Actions();
+  auto filter = [query](const Unit& unit) {
+    bool isCreepTumor = IsUnit(UNIT_TYPEID::ZERG_CREEPTUMOR)(unit)
+                     || IsUnit(UNIT_TYPEID::ZERG_CREEPTUMORBURROWED)(unit)
+                     || IsUnit(UNIT_TYPEID::ZERG_CREEPTUMORQUEEN)(unit);
+    return isCreepTumor && IsUnitAbilityAvailable(query, unit.tag, ABILITY_ID::BUILD_CREEPTUMOR);
+  };
+  Units tumorUnits = observation->GetUnits(Unit::Alliance::Self, filter);
+  for (Unit& tumorUnit : tumorUnits) {
+    if (tumorUnit.orders.empty()) {
+      Point2D target;
+      if (FindRandomPoint(tumorUnit.pos, &target, 10, [query](const Point2D& p){return query->Placement(ABILITY_ID::BUILD_CREEPTUMOR_TUMOR, p);})) {
+        actions->UnitCommand(tumorUnit.tag, ABILITY_ID::BUILD_CREEPTUMOR, target);
+      }
+    }
+  }
+}
+
 void Bot::WorkEconomy() {
   ActionInterface* actions = Actions();
   const ObservationInterface* observation = Observation();
@@ -167,4 +190,5 @@ void Bot::WorkEconomy() {
     TryBuildStructure(ABILITY_ID::BUILD_SPAWNINGPOOL);
   }
   TryExpand();
+  TryExpandCreep();
 }

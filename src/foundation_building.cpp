@@ -79,11 +79,11 @@ void FoundationBuilding::TryInjectLarva(ActionInterface* actions, QueryInterface
 
 void FoundationBuilding::TryBuildCreepTumor(ActionInterface* actions, const ObservationInterface* observation, QueryInterface* query) {
   for (auto& queenTag : queenTags) {
-    if (IsUnitAbilityAvailable(query, queenTag, ABILITY_ID::BUILD_CREEPTUMOR)) {
-      const Unit* queen = observation->GetUnit(queenTag);
+    const Unit* queen = observation->GetUnit(queenTag);
+    if (queen->orders.empty() && IsUnitAbilityAvailable(query, queenTag, ABILITY_ID::BUILD_CREEPTUMOR)) {
       Point2D target;
-      if (FindRandomPoint(queen->pos, &target, 10, [query](const Point2D& p){return query->Placement(ABILITY_ID::BUILD_CREEPTUMOR, p);})) {
-        actions->UnitCommand(queenTag, ABILITY_ID::BUILD_CREEPTUMOR);
+      if (FindRandomPoint(queen->pos, &target, 10, [query](const Point2D& p){return query->Placement(ABILITY_ID::BUILD_CREEPTUMOR_QUEEN, p);})) {
+        actions->UnitCommand(queenTag, ABILITY_ID::BUILD_CREEPTUMOR, target);
       }
     }
   }
