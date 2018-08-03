@@ -7,22 +7,17 @@
 using Point2DFilter = std::function<bool(const sc2::Point2D&)>;
 const auto FilterNone = [](const auto&){return true;};
 
-bool FindNearestUnit(const sc2::Point2D& start, const sc2::Units& units,
-                     uint64_t * target,
-                     sc2::Filter filter = FilterNone);
+bool FindNearestUnit(const sc2::Point2D &, const sc2::Units &, uint64_t *,
+                     sc2::Filter = FilterNone);
 
-bool FindNearestPoint2D(const sc2::Point2D& point,
-                        const std::vector<sc2::Point2D>& candidates,
-                        sc2::Point2D * target,
-                        Point2DFilter filter = FilterNone);
+bool FindNearestPoint2D(const sc2::Point2D &, const std::vector<sc2::Point2D> &,
+                        sc2::Point2D *, Point2DFilter = FilterNone);
 
-bool IsUnitAbilityAvailable(sc2::QueryInterface* query, sc2::Tag unitTag,
-                            sc2::ABILITY_ID abilityID);
+bool IsUnitAbilityAvailable(sc2::QueryInterface *, sc2::Tag, sc2::ABILITY_ID);
 
-std::vector<sc2::Tag> UnitsWithAbility(sc2::QueryInterface* query,
-                                       std::vector<sc2::Tag> unitTags,
-                                       sc2::ABILITY_ID abilityID);
+std::vector<sc2::Tag> UnitsWithAbility(sc2::QueryInterface *,
+                                       std::vector<sc2::Tag>, sc2::ABILITY_ID);
 
 // TODO: Use batched version of sc2::QueryInterface::Placement
-bool FindRandomPoint(const sc2::Point2D& origin, sc2::Point2D* target,
-                     float radius, Point2DFilter filter = FilterNone);
+bool FindRandomPoint(const sc2::Point2D &, sc2::Point2D *, float,
+                     Point2DFilter = FilterNone);

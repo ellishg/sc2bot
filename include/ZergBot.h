@@ -24,7 +24,7 @@ private:
 
   void TryGetSupply();
 
-  void TryBuildStructure(sc2::ABILITY_ID buildStructureAbility);
+  void TryBuildStructure(sc2::ABILITY_ID);
 
 public:
   ZergBot() : foundationBuildings(), expansions(), workerTags(),
@@ -34,9 +34,9 @@ public:
 
   virtual void OnStep() final;
 
-  virtual void OnUnitCreated(const sc2::Unit& unit);
+  virtual void OnUnitCreated(const sc2::Unit &);
 
-  virtual void OnUnitDestroyed(const sc2::Unit & unit);
+  virtual void OnUnitDestroyed(const sc2::Unit &);
 
-  virtual void OnUnitIdle(const sc2::Unit& unit) final;
+  virtual void OnUnitIdle(const sc2::Unit &) final;
 };

@@ -18,7 +18,7 @@ void ZergBot::OnStep() {
   WorkEconomy();
 }
 
-void ZergBot::OnUnitCreated(const Unit& unit) {
+void ZergBot::OnUnitCreated(const Unit &unit) {
   const ObservationInterface * observation = Observation();
   ActionInterface * actions = Actions();
   // cout << "Created " << unit.unit_type.to_string() << endl;
@@ -61,7 +61,7 @@ void ZergBot::OnUnitCreated(const Unit& unit) {
   }
 }
 
-void ZergBot::OnUnitDestroyed(const Unit & unit) {
+void ZergBot::OnUnitDestroyed(const Unit &unit) {
   switch (unit.unit_type.ToType()) {
     case UNIT_TYPEID::ZERG_HIVE:
     case UNIT_TYPEID::ZERG_LAIR:
@@ -101,7 +101,7 @@ void ZergBot::OnUnitDestroyed(const Unit & unit) {
   }
 }
 
-void ZergBot::OnUnitIdle(const Unit& unit) {
+void ZergBot::OnUnitIdle(const Unit &unit) {
   switch (unit.unit_type.ToType()) {
     default: {
       break;

@@ -9,7 +9,7 @@ private:
   size_t numPendingWorkers;
   size_t numPendingQueens;
 
-  bool NeedsMineralHarvesters(const sc2::ObservationInterface* observation);
+  bool NeedsMineralHarvesters(const sc2::ObservationInterface *);
 
   bool NeedsQueen();
 
@@ -17,19 +17,25 @@ public:
   sc2::Tag buildingTag;
   std::vector<sc2::Tag> queenTags;
 
-  FoundationBuilding(sc2::Tag _buildingTag) : buildingTag(_buildingTag), queenTags(), numPendingWorkers(0), numPendingQueens(0) {}
+  FoundationBuilding(sc2::Tag _buildingTag)
+      : buildingTag(_buildingTag), queenTags(),
+        numPendingWorkers(0), numPendingQueens(0) {}
 
-  bool OnQueenCreated(sc2::Tag queenTag);
+  bool OnQueenCreated(sc2::Tag);
 
-  bool OnQueenDestroyed(sc2::Tag queenTag);
+  bool OnQueenDestroyed(sc2::Tag);
 
-  void TryTrainWorker(sc2::ActionInterface* action, const sc2::ObservationInterface* observation, sc2::QueryInterface* query);
+  void TryTrainWorker(sc2::ActionInterface *, const sc2::ObservationInterface *,
+                      sc2::QueryInterface*);
 
-  bool TryAssignWorker(sc2::ActionInterface* actions, const sc2::ObservationInterface* observation, const sc2::Units& mineralFields, const sc2::Unit& worker);
+  bool TryAssignWorker(sc2::ActionInterface *, const sc2::ObservationInterface *,
+                       const sc2::Units &, const sc2::Unit &);
 
-  void TryTrainQueen(sc2::ActionInterface* action, sc2::QueryInterface* query);
+  void TryTrainQueen(sc2::ActionInterface *, sc2::QueryInterface *);
 
-  void TryInjectLarva(sc2::ActionInterface* actions, sc2::QueryInterface* query);
+  void TryInjectLarva(sc2::ActionInterface *, sc2::QueryInterface *);
 
-  void TryBuildCreepTumor(sc2::ActionInterface* actions, const sc2::ObservationInterface* observation, sc2::QueryInterface* query);
+  void TryBuildCreepTumor(sc2::ActionInterface *,
+                          const sc2::ObservationInterface *,
+                          sc2::QueryInterface *);
 };
