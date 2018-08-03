@@ -3,8 +3,8 @@
 using namespace std;
 using namespace sc2;
 
-bool FindNearestUnit(const Point2D& start, const Units& units,
-                     uint64_t * target, Filter filter) {
+bool FindNearestUnit(const Point2D &start, const Units &units,
+                     uint64_t *target, Filter filter) {
   bool found = false;
   float bestDistanceSqrd;
   for (const auto &u : units) {
@@ -20,29 +20,27 @@ bool FindNearestUnit(const Point2D& start, const Units& units,
   return found;
 }
 
-bool FindNearestPoint2D(const Point2D& point, const vector<Point2D>& candidates, Point2D * target, function<bool(const Point2D&)> filter) {
-  if (candidates.size() == 0) {
-    return false;
-  }
-  float bestDistanceSqrd = numeric_limits<float>::max();
-  for (auto & c : candidates) {
+bool FindNearestPoint2D(const Point2D &point, const vector<Point2D> &candidates,
+                        Point2D * target, Point2DFilter filter) {
+  bool found = false;
+  float bestDistanceSqrd;
+  for (const auto &c : candidates) {
     if (filter(c)) {
       float distSqrd = DistanceSquared2D(point, c);
-      if (distSqrd < bestDistanceSqrd) {
+      if (!found || distSqrd < bestDistanceSqrd) {
         bestDistanceSqrd = distSqrd;
         *target = c;
       }
+      found = true;
     }
   }
-  if (bestDistanceSqrd == numeric_limits<float>::max()) {
-    return false;
-  }
-  return true;
+  return found;
 }
 
-bool IsUnitAbilityAvailable(QueryInterface* query, Tag unitTag, ABILITY_ID abilityID) {
-  AvailableAbilities abilities = query->GetAbilitiesForUnit(unitTag);
-  for (auto& a : abilities.abilities) {
+bool IsUnitAbilityAvailable(QueryInterface *query, Tag unitTag,
+                            ABILITY_ID abilityID) {
+  auto abilities = query->GetAbilitiesForUnit(unitTag);
+  for (auto &a : abilities.abilities) {
     if (a.ability_id == abilityID) {
       return true;
     }
@@ -50,11 +48,12 @@ bool IsUnitAbilityAvailable(QueryInterface* query, Tag unitTag, ABILITY_ID abili
   return false;
 }
 
-vector<Tag> UnitsWithAbility(QueryInterface* query, vector<Tag> unitTags, ABILITY_ID abilityID) {
+vector<Tag> UnitsWithAbility(QueryInterface *query, vector<Tag> unitTags,
+                             ABILITY_ID abilityID) {
   vector<Tag> capableUnits;
   auto abilityLists = query->GetAbilitiesForUnits(unitTags);
-  for (auto& availableAbilities : abilityLists) {
-    for (auto& ability : availableAbilities.abilities) {
+  for (auto &availableAbilities : abilityLists) {
+    for (auto &ability : availableAbilities.abilities) {
       if (ability.ability_id == abilityID) {
         capableUnits.push_back(availableAbilities.unit_tag);
         break;
@@ -64,12 +63,12 @@ vector<Tag> UnitsWithAbility(QueryInterface* query, vector<Tag> unitTags, ABILIT
   return capableUnits;
 }
 
-bool FindRandomPoint(const Point2D& origin, Point2D* target, float radius, function<bool(const Point2D&)> filter) {
-  const int numTests = 100;
-  for (size_t i = 0; i < numTests; i++) {
-    Point2D testPoint = Point2D(GetRandomScalar(), GetRandomScalar());
-    Normalize2D(testPoint);
-    testPoint = origin + (testPoint * radius * GetRandomScalar());
+bool FindRandomPoint(const Point2D& origin, Point2D* target, float radius,
+                     Point2DFilter filter) {
+  const int numTrials = 100;
+  for (size_t i = 0; i < numTrials; i++) {
+    float r = radius * GetRandomScalar(), theta = GetRandomScalar();
+    auto testPoint = origin + Point2D(r * cos(theta), r * sin(theta));
     if (filter(testPoint)) {
       *target = testPoint;
       return true;

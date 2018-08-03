@@ -2,6 +2,7 @@
 
 #include <sc2api/sc2_api.h>
 #include <iostream>
+#include <math.h>
 
 using Point2DFilter = std::function<bool(const sc2::Point2D&)>;
 const auto FilterNone = [](const auto&){return true;};
