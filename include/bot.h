@@ -9,11 +9,10 @@
 class Bot : public sc2::Agent {
 
 private:
-
-  std::vector<FoundationBuilding> _foundationBuildings;
-  std::vector<sc2::Point2D> _expansions;
-  std::vector<sc2::Tag> _workerTags;
-  int32_t _pendingSupply;
+  std::vector<FoundationBuilding> foundationBuildings;
+  std::vector<sc2::Point2D> expansions;
+  std::vector<sc2::Tag> workerTags;
+  int32_t pendingSupply;
 
   void TryExpand();
 
@@ -28,8 +27,8 @@ private:
   void TryBuildStructure(sc2::ABILITY_ID buildStructureAbility);
 
 public:
-
-  Bot() : _foundationBuildings(), _expansions(), _workerTags(), _pendingSupply(0) {}
+  Bot() : foundationBuildings(), expansions(), workerTags(),
+          pendingSupply(0) {}
 
   virtual void OnGameStart() final;
 
