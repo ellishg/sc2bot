@@ -1,4 +1,4 @@
-#include "foundation_building.h"
+#include "FoundationBuilding.h"
 
 using namespace std;
 using namespace sc2;

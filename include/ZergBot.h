@@ -3,10 +3,10 @@
 #include <sc2lib/sc2_lib.h>
 #include <sc2api/sc2_api.h>
 
-#include "foundation_building.h"
+#include "FoundationBuilding.h"
 #include "common.h"
 
-class Bot : public sc2::Agent {
+class ZergBot : public sc2::Agent {
 
 private:
   std::vector<FoundationBuilding> foundationBuildings;
@@ -27,7 +27,7 @@ private:
   void TryBuildStructure(sc2::ABILITY_ID buildStructureAbility);
 
 public:
-  Bot() : foundationBuildings(), expansions(), workerTags(),
+  ZergBot() : foundationBuildings(), expansions(), workerTags(),
           pendingSupply(0) {}
 
   virtual void OnGameStart() final;

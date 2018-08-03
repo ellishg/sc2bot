@@ -1,11 +1,11 @@
-#include "bot.h"
+#include "ZergBot.h"
 
 #include <iostream>
 
 using namespace std;
 using namespace sc2;
 
-void Bot::OnGameStart() {
+void ZergBot::OnGameStart() {
   auto *obs = Observation();
   vector<Point3D> locs = search::CalculateExpansionLocations(obs, Query());
   for (auto& loc : locs) {
@@ -13,12 +13,12 @@ void Bot::OnGameStart() {
   }
 }
 
-void Bot::OnStep() {
+void ZergBot::OnStep() {
   // cout << "Num foundation buildings: " << foundationBuildings.size() << endl;
   WorkEconomy();
 }
 
-void Bot::OnUnitCreated(const Unit& unit) {
+void ZergBot::OnUnitCreated(const Unit& unit) {
   const ObservationInterface * observation = Observation();
   ActionInterface * actions = Actions();
   // cout << "Created " << unit.unit_type.to_string() << endl;
@@ -61,7 +61,7 @@ void Bot::OnUnitCreated(const Unit& unit) {
   }
 }
 
-void Bot::OnUnitDestroyed(const Unit & unit) {
+void ZergBot::OnUnitDestroyed(const Unit & unit) {
   switch (unit.unit_type.ToType()) {
     case UNIT_TYPEID::ZERG_HIVE:
     case UNIT_TYPEID::ZERG_LAIR:
@@ -101,7 +101,7 @@ void Bot::OnUnitDestroyed(const Unit & unit) {
   }
 }
 
-void Bot::OnUnitIdle(const Unit& unit) {
+void ZergBot::OnUnitIdle(const Unit& unit) {
   switch (unit.unit_type.ToType()) {
     default: {
       break;
@@ -109,12 +109,12 @@ void Bot::OnUnitIdle(const Unit& unit) {
   }
 }
 
-bool Bot::NeedSupply() {
+bool ZergBot::NeedSupply() {
   auto *obs = Observation();
   return obs->GetFoodUsed() >= obs->GetFoodCap() + pendingSupply;
 }
 
-void Bot::TryGetSupply() {
+void ZergBot::TryGetSupply() {
   auto *obs = Observation();
   Units larvae = obs->GetUnits(Unit::Alliance::Self,
                                IsUnit(UNIT_TYPEID::ZERG_LARVA));
@@ -127,7 +127,7 @@ void Bot::TryGetSupply() {
   }
 }
 
-void Bot::TryBuildStructure(ABILITY_ID buildStructureAbility) {
+void ZergBot::TryBuildStructure(ABILITY_ID buildStructureAbility) {
   auto *obs = Observation();
   if (workerTags.size() > 0) {
     const Unit* drone = obs->GetUnit(workerTags.back());
@@ -146,7 +146,7 @@ void Bot::TryBuildStructure(ABILITY_ID buildStructureAbility) {
   }
 }
 
-void Bot::TryExpand() {
+void ZergBot::TryExpand() {
   auto *obs = Observation();
   if (workerTags.size() > 0) {
     const Unit* drone = obs->GetUnit(workerTags.back());
@@ -166,7 +166,7 @@ void Bot::TryExpand() {
   }
 }
 
-void Bot::TryExpandCreep() {
+void ZergBot::TryExpandCreep() {
   QueryInterface* query = Query();
   auto *obs = Observation();
   ActionInterface* actions = Actions();
@@ -192,7 +192,7 @@ void Bot::TryExpandCreep() {
   }
 }
 
-void Bot::WorkEconomy() {
+void ZergBot::WorkEconomy() {
   auto *actions = Actions();
   auto *obs = Observation();
   QueryInterface* query = Query();

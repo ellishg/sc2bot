@@ -1,4 +1,4 @@
-#include "bot.h"
+#include "ZergBot.h"
 
 using namespace sc2;
 using namespace std;
@@ -8,7 +8,7 @@ int main(int argc, char* argv[]) {
   coordinator.LoadSettings(argc, argv);
   //  coordinator.SetRealtime(true);
 
-  Bot bot;
+  ZergBot bot;
   coordinator.SetParticipants({
     CreateParticipant(Race::Zerg, &bot),
     CreateComputer(Race::Terran)

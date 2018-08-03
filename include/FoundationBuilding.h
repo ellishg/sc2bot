@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "common.h"
+#include "Common.h"
 
 class FoundationBuilding {
 private:
