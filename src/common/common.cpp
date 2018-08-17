@@ -39,12 +39,9 @@ bool FindNearestPoint2D(const Point2D &point, const vector<Point2D> &candidates,
 
 bool IsUnitAbilityAvailable(QueryInterface *query, Tag unitTag,
                             ABILITY_ID abilityID) {
-  auto abilities = query->GetAbilitiesForUnit(unitTag);
-  for (auto &a : abilities.abilities) {
-    if (a.ability_id == abilityID) {
+  for (auto &a : query->GetAbilitiesForUnit(unitTag).abilities)
+    if (a.ability_id == abilityID)
       return true;
-    }
-  }
   return false;
 }
 
@@ -65,6 +62,10 @@ vector<Tag> UnitsWithAbility(QueryInterface *query, vector<Tag> unitTags,
 
 bool FindRandomPoint(const Point2D& origin, Point2D* target, float radius,
                      Point2DFilter filter) {
+  if (radius == 0) {
+    *target = origin;
+    return filter(origin);
+  }
   const int numTrials = 100;
   for (size_t i = 0; i < numTrials; i++) {
     float r = radius * GetRandomScalar(), theta = GetRandomScalar();
@@ -75,4 +76,36 @@ bool FindRandomPoint(const Point2D& origin, Point2D* target, float radius,
     }
   }
   return false;
+}
+
+float GetBestInRange(float low, float high, float tolerance,
+                     std::function<float(float, float)> ScoreRange) {
+  float mid = (high + low) / 2.f;
+  while (high - low > tolerance) {
+    if (ScoreRange(low, mid) < ScoreRange(mid, high)) {
+      high = mid;
+    } else {
+      low = mid;
+    }
+    mid = (high + low) / 2.f;
+  }
+  return mid;
+}
+
+Units FilterUnits(Units units, Filter filter) {
+  Units filteredUnits;
+  for (auto &unit : units) {
+    if (filter(unit)) filteredUnits.push_back(unit);
+  }
+  return filteredUnits;
+}
+
+Point2D GetAveragePoint(Units units) {
+  Point2D sum;
+  for (auto &unit : units) sum += unit.pos;
+  return sum / units.size();
+}
+
+Point2D Normalize2D(Point2D a) {
+  return a / std::sqrt(Dot2D(a, a));
 }

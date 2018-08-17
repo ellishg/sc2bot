@@ -21,3 +21,12 @@ std::vector<sc2::Tag> UnitsWithAbility(sc2::QueryInterface *,
 // TODO: Use batched version of sc2::QueryInterface::Placement
 bool FindRandomPoint(const sc2::Point2D &, sc2::Point2D *, float,
                      Point2DFilter = FilterNone);
+
+float GetBestInRange(float low, float high, float tolerance,
+                     std::function<float(float, float)> ScoreRange);
+
+sc2::Units FilterUnits(sc2::Units units, sc2::Filter filter);
+
+sc2::Point2D GetAveragePoint(sc2::Units units);
+
+sc2::Point2D Normalize2D(sc2::Point2D a);
