@@ -3,7 +3,7 @@
 using namespace sc2;
 using namespace std;
 
-void ZergBot::ManageStructures::OnPeriod() {
+Suggestions ZergBot::ManageStructures::OnPeriod() {
   // TODO: Check for pending buildings.
   const vector<Structure> cruicialStructures = {
     Structure(
@@ -79,12 +79,14 @@ void ZergBot::ManageStructures::OnPeriod() {
     )
   };
 
+  Suggestions suggestions;
   for (auto structure : cruicialStructures) {
     if (structure.BuildCondition(observation)) {
       if (structure.GetTargetLocation) {
-        TryBuildStructureNear(structure.ability,
+        VECTOR_COMBINE(suggestions,
+                       TryBuildStructureNear(structure.ability,
                               structure.GetTargetLocation(observation, query),
-                              structure.tolerance);
+                              structure.tolerance));
       } else if (structure.GetTargetTag) {
         Tag targetTag = structure.GetTargetTag(observation, query);
         Point2D target;
@@ -92,41 +94,38 @@ void ZergBot::ManageStructures::OnPeriod() {
           target = targetUnit->pos;
         uint64_t droneTag;
         if (FindNearestUnit(target, GetFreeDrones(), &droneTag)) {
-          action->UnitCommand(droneTag, structure.ability, targetTag);
+          suggestions.emplace_back(droneTag, structure.ability, targetTag);
         }
       } else
         assert(false &&
                "Structure must have GetTargetLocation or GetTargetTag");
     }
   }
-
+  return suggestions;
 }
 
-void ZergBot::ManageStructures::OnUnitDestroyed(const Unit &unit) {
+Suggestions ZergBot::ManageStructures::OnUnitDestroyed(const Unit &unit) {
   // TODO: If an important building was destroyed, rebuild immediatly
   // If not too important, leave to be automatically built.
+  return {};
 }
 
-
-bool ZergBot::ManageStructures::TryBuildStructureNear(ABILITY_ID structure,
-                                                      const Point2D target,
-                                                      float tolerance) {
+Suggestions ZergBot::ManageStructures::TryBuildStructureNear(
+                ABILITY_ID structure, const Point2D target, float tolerance) {
   uint64_t droneTag;
   if (FindNearestUnit(target, GetFreeDrones(), &droneTag)) {
-    auto queryCopy = query;
-    auto canBuildStructure =
-      [queryCopy, structure, target](const Point2D &target) {
-        return queryCopy->Placement(structure, target);
-      };
+    auto canBuildStructure = [this, structure](const Point2D &target) {
+      return query->Placement(structure, target);
+    };
     Point2D buildLoc;
     if (FindRandomPoint(target, &buildLoc, tolerance, canBuildStructure)) {
-      action->UnitCommand(droneTag, structure, buildLoc);
-      return true;
+      return {SuggestedAction(droneTag, structure, buildLoc)};
     } else
-      cout << "Unable to build structure near " << target.x << ", " << target.y << endl;
+      cout << "Unable to build structure near " << target.x << ", "
+           << target.y << endl;
   } else
     cout << "Unable to find drone" << endl;
-  return false;
+  return {};
 }
 
 Units ZergBot::ManageStructures::GetFreeDrones() {

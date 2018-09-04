@@ -6,7 +6,7 @@ using namespace std;
 int main(int argc, char* argv[]) {
   Coordinator coordinator;
   coordinator.LoadSettings(argc, argv);
-  //  coordinator.SetRealtime(true);
+  // coordinator.SetRealtime(true);
 
   ZergBot bot;
   coordinator.SetParticipants({

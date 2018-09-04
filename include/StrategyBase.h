@@ -2,12 +2,13 @@
 
 #include <sc2api/sc2_api.h>
 
+#include "SuggestedAction.h"
+
 class StrategyBase {
   const size_t period;
   size_t ticks;
 
 protected:
-  sc2::ActionInterface * action;
   const sc2::ObservationInterface * observation;
   sc2::QueryInterface * query;
 
@@ -17,71 +18,47 @@ public:
     assert(period > 0 && "must specify a positive period");
   }
 
-  virtual void OnPeriod() {}
+  virtual Suggestions OnPeriod() { return {}; }
 
   virtual void OnGameFullStart() {}
   virtual void OnGameStart() {}
   virtual void OnGameEnd() {}
 
   // Fancy macro metaprogramming :)
-  #define CAPTUREMETHOD(NAME) \
-  virtual void NAME() {} \
-  virtual void NAME(sc2::ActionInterface *_action, \
-                    const sc2::ObservationInterface *_observation, \
-                    sc2::QueryInterface *_query) { \
-    action = _action; observation = _observation; query = _query; NAME(); \
+  #define CAPTURE_METHOD(NAME) \
+  virtual Suggestions NAME() { return {}; } \
+  virtual Suggestions NAME(const sc2::ObservationInterface *_observation, \
+                           sc2::QueryInterface *_query) { \
+    observation = _observation; query = _query; return NAME(); \
   }
 
-  #define CAPTUREMETHODWITHARG(NAME, ARGTYPE) \
-  virtual void NAME(ARGTYPE) {} \
-  virtual void NAME(sc2::ActionInterface *_action, \
-                    const sc2::ObservationInterface *_observation, \
-                    sc2::QueryInterface *_query, ARGTYPE arg) { \
-    action = _action; observation = _observation; query = _query; NAME(arg); \
+  #define CAPTURE_METHOD_WITH_ARG(NAME, ARGTYPE) \
+  virtual Suggestions NAME(ARGTYPE) { return {}; } \
+  virtual Suggestions NAME(const sc2::ObservationInterface *_observation, \
+                           sc2::QueryInterface *_query, ARGTYPE arg) { \
+    observation = _observation; query = _query; return NAME(arg); \
   }
 
-  CAPTUREMETHODWITHARG(OnUnitCreated, const sc2::Unit&)
-  CAPTUREMETHODWITHARG(OnUnitDestroyed, const sc2::Unit&)
-  CAPTUREMETHODWITHARG(OnUnitIdle, const sc2::Unit&)
-  CAPTUREMETHODWITHARG(OnUpgradeCompleted, sc2::UpgradeID)
-  CAPTUREMETHODWITHARG(OnBuildingConstructionComplete, const sc2::Unit&)
-  CAPTUREMETHODWITHARG(OnUnitEnterVision, const sc2::Unit&)
-  CAPTUREMETHOD(OnNydusDetected)
-  CAPTUREMETHOD(OnNuclearLaunchDetected)
+  CAPTURE_METHOD_WITH_ARG(OnUnitCreated, const sc2::Unit&)
+  CAPTURE_METHOD_WITH_ARG(OnUnitDestroyed, const sc2::Unit&)
+  CAPTURE_METHOD_WITH_ARG(OnUnitIdle, const sc2::Unit&)
+  CAPTURE_METHOD_WITH_ARG(OnUpgradeCompleted, sc2::UpgradeID)
+  CAPTURE_METHOD_WITH_ARG(OnBuildingConstructionComplete, const sc2::Unit&)
+  CAPTURE_METHOD_WITH_ARG(OnUnitEnterVision, const sc2::Unit&)
+  CAPTURE_METHOD(OnNydusDetected)
+  CAPTURE_METHOD(OnNuclearLaunchDetected)
 
-  void OnTick(sc2::ActionInterface *_action,
-              const sc2::ObservationInterface *_observation,
-              sc2::QueryInterface *_query) {
+  #undef CAPTURE_METHOD_WITH_ARG
+  #undef CAPTURE_METHOD
+
+  Suggestions OnTick(const sc2::ObservationInterface *_observation,
+                     sc2::QueryInterface *_query) {
     if (++ticks >= period) {
-      action = _action; observation = _observation; query = _query;
+      observation = _observation;
+      query = _query;
       ticks = 0;
-      OnPeriod();
+      return OnPeriod();
     }
+    return {};
   }
-
-  // virtual void OnUnitDestroyed(sc2::ActionInterface *,
-  //                              const sc2::ObservationInterface *,
-  //                              sc2::QueryInterface *, const sc2::Unit&) {}
-  // virtual void OnUnitCreated(sc2::ActionInterface *,
-  //                            const sc2::ObservationInterface *,
-  //                            sc2::QueryInterface *, const sc2::Unit&){}
-  // virtual void OnUnitIdle(sc2::ActionInterface *,
-  //                         const sc2::ObservationInterface *,
-  //                         sc2::QueryInterface *, const sc2::Unit&) {}
-  // virtual void OnUpgradeCompleted(sc2::ActionInterface *,
-  //                                 const sc2::ObservationInterface *,
-  //                                 sc2::QueryInterface *, sc2::UpgradeID) {}
-  // virtual void OnBuildingConstructionComplete(sc2::ActionInterface *,
-  //                                             const sc2::ObservationInterface *,
-  //                                             sc2::QueryInterface *,
-  //                                             const sc2::Unit&) {}
-  // virtual void OnNydusDetected(sc2::ActionInterface *,
-  //                              const sc2::ObservationInterface *,
-  //                              sc2::QueryInterface *) {}
-  // virtual void OnNuclearLaunchDetected(sc2::ActionInterface *,
-  //                                      const sc2::ObservationInterface *,
-  //                                      sc2::QueryInterface *) {}
-  // virtual void OnUnitEnterVision(sc2::ActionInterface *,
-  //                                const sc2::ObservationInterface *,
-  //                                sc2::QueryInterface *, const sc2::Unit&) {}
 };

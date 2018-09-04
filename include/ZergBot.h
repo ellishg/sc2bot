@@ -4,7 +4,6 @@
 #include <sc2api/sc2_api.h>
 
 #include "BotBase.h"
-#include "FoundationBuilding.h"
 #include "common.h"
 
 namespace sc2 {
@@ -17,12 +16,13 @@ class ZergBot : public BotBase {
     strategies.emplace_back(new ManageStructures(100));
     strategies.emplace_back(new ManageSupply(10));
     strategies.emplace_back(new ManageQueens(100));
-    strategies.emplace_back(new ExpandCreep(100));
+    // strategies.emplace_back(new ExpandCreep(100));
     return strategies;
   }
 
 public:
   ZergBot() : BotBase(PopulateStrategies()) {}
+  // FIXME: Do I need to clear the list??
   ~ZergBot() { strategies.clear(); }
 
   // TODO: Use `OnGame` methods to initialize and destroy strategies.
@@ -62,11 +62,11 @@ private:
   public:
     ManageStructures(size_t period) : StrategyBase(period) {}
 
-    void OnPeriod();
-    void OnUnitDestroyed(const Unit &unit);
+    Suggestions OnPeriod();
+    Suggestions OnUnitDestroyed(const Unit &unit);
 
   private:
-    bool TryBuildStructureNear(sc2::ABILITY_ID structure,
+    Suggestions TryBuildStructureNear(sc2::ABILITY_ID structure,
                                const sc2::Point2D target, float tolerance = 3);
     sc2::Units GetFreeDrones();
   };
@@ -75,9 +75,9 @@ private:
   public:
     ManageSupply(size_t period) : StrategyBase(period), pendingSupply(0) {}
 
-    void OnPeriod();
-    void OnUnitCreated(const Unit &unit);
-    void OnUnitDestroyed(const Unit &unit);
+    Suggestions OnPeriod();
+    Suggestions OnUnitCreated(const Unit &unit);
+    Suggestions OnUnitDestroyed(const Unit &unit);
 
   private:
     size_t pendingSupply;
@@ -89,15 +89,15 @@ private:
   public:
     ManageDrones(size_t period) : StrategyBase(period) {}
 
-    void OnGameStart();
-    void OnPeriod();
-    void OnUnitCreated(const Unit &unit);
-    void OnUnitIdle(const Unit &unit);
+    Suggestions OnPeriod();
+    Suggestions OnUnitCreated(const Unit &unit);
+    Suggestions OnUnitDestroyed(const Unit &unit);
+    Suggestions OnUnitIdle(const Unit &unit);
 
   private:
-    void AssignWork(const Unit &drone);
-    void MineMinerals(const Unit &drone);
-    void MineVespeneGas(const Unit &drone);
+    Suggestions AssignWork(const Unit &drone);
+    Suggestions MineMinerals(const Unit &drone);
+    Suggestions MineVespeneGas(const Unit &drone);
 
     inline bool IsDrone(const Unit &unit) {
       return unit.unit_type == UNIT_TYPEID::ZERG_DRONE;
@@ -146,15 +146,15 @@ private:
   public:
     ManageQueens(size_t period) : StrategyBase(period) {}
 
-    void OnPeriod();
-    void OnUnitCreated(const Unit &unit);
-    void OnUnitDestroyed(const Unit &unit);
+    Suggestions OnPeriod();
+    Suggestions OnUnitCreated(const Unit &unit);
+    Suggestions OnUnitDestroyed(const Unit &unit);
 
   private:
-    void TrainQueens();
-    void SpawnCreep(Queen queen);
-    void InjectLarva(Queen queen);
-    void Attack(Queen queen);
+    Suggestions TrainQueens();
+    Suggestions SpawnCreep(Queen queen);
+    Suggestions InjectLarva(Queen queen);
+    Suggestions Attack(Queen queen);
 
     bool IsQueen(const Unit &unit) {
       return unit.unit_type == UNIT_TYPEID::ZERG_QUEEN;
@@ -165,7 +165,7 @@ private:
   public:
     ExpandCreep(size_t period) : StrategyBase(period) {}
 
-    void OnPeriod();
+    Suggestions OnPeriod();
 
   private:
   };
@@ -192,38 +192,4 @@ private:
   }
 };
 
-// class ZergBot : public Agent {
-//
-// private:
-//   std::vector<FoundationBuilding> foundationBuildings;
-//   std::vector<Point2D> expansions;
-//   std::vector<Tag> workerTags;
-//   int32_t pendingSupply;
-//
-//   void TryExpand();
-//
-//   void TryExpandCreep();
-//
-//   void WorkEconomy();
-//
-//   bool NeedSupply();
-//
-//   void TryGetSupply();
-//
-//   void TryBuildStructure(ABILITY_ID);
-//
-// public:
-//   ZergBot() : foundationBuildings(), expansions(), workerTags(),
-//           pendingSupply(0) {}
-//
-//   virtual void OnGameStart() final;
-//
-//   virtual void OnStep() final;
-//
-//   virtual void OnUnitCreated(const Unit &);
-//
-//   virtual void OnUnitDestroyed(const Unit &);
-//
-//   virtual void OnUnitIdle(const sc2::Unit &) final;
-// };
 }

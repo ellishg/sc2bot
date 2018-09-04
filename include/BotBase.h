@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <algorithm>
 #include <sc2lib/sc2_lib.h>
 #include <sc2api/sc2_api.h>
 
@@ -11,13 +12,39 @@ using StrategyList = std::vector<StrategyBase *>;
 class BotBase : public sc2::Agent {
 
   StrategyList strategies;
+  Suggestions suggestions;
+
+  // There may be many strategies for issuing commands.
+  // First idea: Sort by priority and issue commands until you run out of
+  //             resources. We stop once we cannot issue one command because
+  //             that command has high priority.
+  void IssueCommands() {
+    // TODO: Also issue any free actions.
+    // TODO: Provide a callback function so that when an action is rejected,
+    //       we can make a new action.
+    std::sort(suggestions.begin(), suggestions.end());
+
+    Suggestions newSuggestions;
+    bool isIssuingCommands = true;
+    for (auto suggestion : suggestions) {
+      // FIXME: Does `Observation()` change? I want to make sure that we don't
+      //        think we can afford everything because we aren't keeping track
+      //        of resources used!!!!!!
+      if (isIssuingCommands && suggestion.IsAffordable(Observation())) {
+        suggestion.Issue(Actions());
+      } else {
+        VECTOR_COMBINE(newSuggestions, suggestion.Reject());
+        isIssuingCommands = false;
+      }
+    }
+    suggestions.clear();  // Is this needed?
+    suggestions = newSuggestions;
+  }
 
 protected:
   BotBase(StrategyList _strategies) : strategies(_strategies) {
     // TODO: If running in realtime I need to call SendActions()
   }
-
-  // TODO: Attempt fancy metaprogramming here :)
 
   // Called when a game is started after a load. Fast restarting will not
   // call this.
@@ -42,21 +69,34 @@ protected:
   // in a real time game. In a real time game the user will be responsible
   // for calling GetObservation() via the ObservationInterface.
   virtual void OnStep() {
-    for (auto strategy : strategies)
-      strategy->OnTick(Actions(), Observation(), Query());
+    for (auto strategy : strategies) {
+      VECTOR_COMBINE(suggestions, strategy->OnTick(Observation(), Query()));
+    }
+    IssueCommands();
   }
+
+  // Fancy metaprogramming :)
+
+  #define GENERATE_METHOD_WITH_ARG(NAME, ARGTYPE) \
+  virtual void NAME(ARGTYPE a) { \
+    for (auto strategy : strategies) \
+      VECTOR_COMBINE(suggestions, strategy->NAME(Observation(), Query(), a)); \
+    IssueCommands(); \
+  }
+
+  #define GENERATE_METHOD(NAME) \
+  virtual void NAME() { \
+    for (auto strategy : strategies) \
+      VECTOR_COMBINE(suggestions, strategy->NAME(Observation(), Query())); \
+    IssueCommands(); \
+  }
+
 
   // Called whenever one of the player's units has been destroyed.
-  virtual void OnUnitDestroyed(const sc2::Unit& unit) {
-    for (auto strategy : strategies)
-      strategy->OnUnitDestroyed(Actions(), Observation(), Query(), unit);
-  }
+  GENERATE_METHOD_WITH_ARG(OnUnitDestroyed, const sc2::Unit&)
 
   // Called when a Unit has been created by the player.
-  virtual void OnUnitCreated(const sc2::Unit& unit) {
-    for (auto strategy : strategies)
-      strategy->OnUnitCreated(Actions(), Observation(), Query(), unit);
-  }
+  GENERATE_METHOD_WITH_ARG(OnUnitCreated, const sc2::Unit&)
 
   // Called when a unit becomes idle, this will only occur as an event so
   // will only be called when the unit becomes idle and not a second time.
@@ -64,48 +104,32 @@ protected:
   // currently having orders or if it did not exist in the previous step
   // and now does, a unit being created, for instance, will call both
   // OnUnitCreated and OnUnitIdle if it does not have a rally set.
-  virtual void OnUnitIdle(const sc2::Unit& unit) {
-    for (auto strategy : strategies)
-      strategy->OnUnitIdle(Actions(), Observation(), Query(), unit);
-  }
+  GENERATE_METHOD_WITH_ARG(OnUnitIdle, const sc2::Unit&)
 
   // Called when an upgrade is finished, warp gate, ground weapons, baneling
   // speed, etc.
-  virtual void OnUpgradeCompleted(sc2::UpgradeID id) {
-    for (auto strategy : strategies)
-      strategy->OnUpgradeCompleted(Actions(), Observation(), Query(), id);
-  }
+  GENERATE_METHOD_WITH_ARG(OnUpgradeCompleted, sc2::UpgradeID)
 
   // Called when the unit in the previous step had a build progress less than
   // 1.0 but is greater than or equal to 1.0 in the current step.
-  virtual void OnBuildingConstructionComplete(const sc2::Unit& unit) {
-    for (auto strategy : strategies)
-      strategy->OnBuildingConstructionComplete(Actions(), Observation(),
-                                               Query(), unit);
-  }
+  GENERATE_METHOD_WITH_ARG(OnBuildingConstructionComplete, const sc2::Unit&)
 
   // Called when a nydus is placed.
-  virtual void OnNydusDetected() {
-    for (auto strategy : strategies)
-      strategy->OnNydusDetected(Actions(), Observation(), Query());
-  }
+  GENERATE_METHOD(OnNydusDetected)
 
   // Called when a nuclear launch is detected.
-  virtual void OnNuclearLaunchDetected() {
-    for (auto strategy : strategies)
-      strategy->OnNuclearLaunchDetected(Actions(), Observation(), Query());
-  }
+  GENERATE_METHOD(OnNuclearLaunchDetected)
 
   // Called when an enemy unit enters vision from out of fog of war.
-  virtual void OnUnitEnterVision(const sc2::Unit& unit) {
-    for (auto strategy : strategies)
-      strategy->OnUnitEnterVision(Actions(), Observation(), Query(), unit);
-  }
+  GENERATE_METHOD_WITH_ARG(OnUnitEnterVision, const sc2::Unit&)
+
+  #undef GENERATE_METHOD_WITH_ARG
+  #undef GENERATE_METHOD
 
   // Called for various errors the library can encounter. See ClientError
   // enum for possible errors.
   void OnError(const std::vector<sc2::ClientError>& client_errors,
-                       const std::vector<std::string>& protocol_errors = {}) {
+               const std::vector<std::string>& protocol_errors = {}) {
     for (auto error : client_errors) {
       switch (error) {
         case sc2::ClientError::ErrorSC2:

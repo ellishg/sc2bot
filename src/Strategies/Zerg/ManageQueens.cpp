@@ -2,32 +2,29 @@
 
 using namespace sc2;
 
-void ZergBot::ManageQueens::OnPeriod() {
-  TrainQueens();
+Suggestions ZergBot::ManageQueens::OnPeriod() {
+  Suggestions suggestions;
+  VECTOR_COMBINE(suggestions, TrainQueens());
   for (Queen queen : queens) {
     // TODO
     // SpawnCreep(queen);
-    InjectLarva(queen);
+    VECTOR_COMBINE(suggestions, InjectLarva(queen));
   }
   // TODO: Check if attack is needed.
+  return suggestions;
 }
 
-void ZergBot::ManageQueens::OnUnitCreated(const Unit &unit) {
+Suggestions ZergBot::ManageQueens::OnUnitCreated(const Unit &unit) {
   if (IsQueen(unit)) {
-    // auto hiveFilter = [](const Unit &unit) {
-    //   return IsUnit(UNIT_TYPEID::ZERG_HIVE)(unit)
-    //       || IsUnit(UNIT_TYPEID::ZERG_LAIR)(unit)
-    //       || IsUnit(UNIT_TYPEID::ZERG_HATCHERY)(unit);
-    // };
-    // auto hives = observation->GetUnits(Unit::Alliance::Self, hiveFilter);
     auto hives = ZergBot::GetHives(observation);
     Tag hiveTag;
     if (FindNearestUnit(unit.pos, hives, &hiveTag))
       queens.push_back({unit.tag, hiveTag});
   }
+  return {};
 }
 
-void ZergBot::ManageQueens::OnUnitDestroyed(const Unit &unit) {
+Suggestions ZergBot::ManageQueens::OnUnitDestroyed(const Unit &unit) {
   if (IsQueen(unit)) {
     for (auto queen = queens.begin(); queen != queens.end(); queen++) {
       if (queen->tag == unit.tag) {
@@ -36,13 +33,13 @@ void ZergBot::ManageQueens::OnUnitDestroyed(const Unit &unit) {
       }
     }
   }
+  return {};
 }
 
-void ZergBot::ManageQueens::TrainQueens() {
-  auto queryCopy = query;
-  auto hiveFilter = [queryCopy](const Unit &unit) {
-   return IsUnitAbilityAvailable(queryCopy, unit.tag,
-                                 ABILITY_ID::TRAIN_QUEEN);
+Suggestions ZergBot::ManageQueens::TrainQueens() {
+  Suggestions suggestions;
+  auto hiveFilter = [this](const Unit &unit) {
+   return IsUnitAbilityAvailable(query, unit.tag, ABILITY_ID::TRAIN_QUEEN);
   };
   auto hives = observation->GetUnits(Unit::Alliance::Self, hiveFilter);
   for (auto hive : hives) {
@@ -55,20 +52,24 @@ void ZergBot::ManageQueens::TrainQueens() {
       }
     }
     if (!found)
-      action->UnitCommand(hive.tag, ABILITY_ID::TRAIN_QUEEN);
+      suggestions.emplace_back(hive.tag, ABILITY_ID::TRAIN_QUEEN);
   }
+  return suggestions;
 }
 
-void ZergBot::ManageQueens::SpawnCreep(Queen queen) {
+Suggestions ZergBot::ManageQueens::SpawnCreep(Queen queen) {
   // TODO
+  return {};
 }
 
-void ZergBot::ManageQueens::InjectLarva(Queen queen) {
+Suggestions ZergBot::ManageQueens::InjectLarva(Queen queen) {
   if (IsUnitAbilityAvailable(query, queen.tag, ABILITY_ID::EFFECT_INJECTLARVA))
-    action->UnitCommand(queen.tag, ABILITY_ID::EFFECT_INJECTLARVA,
-                        queen.hiveTag);
+    return {SuggestedAction(queen.tag, ABILITY_ID::EFFECT_INJECTLARVA,
+                            queen.hiveTag)};
+  return {};
 }
 
-void ZergBot::ManageQueens::Attack(Queen queen) {
+Suggestions ZergBot::ManageQueens::Attack(Queen queen) {
   // TODO
+  return {};
 }
